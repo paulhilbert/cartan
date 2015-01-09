@@ -95,6 +95,11 @@ typename mesh_traits<openmesh_t<ColorType>>::vertex_index_t mesh_traits<openmesh
 }
 
 template <class ColorType>
+typename mesh_traits<openmesh_t<ColorType>>::face_index_t mesh_traits<openmesh_t<ColorType>>::face_index(const mesh_t& mesh, face_handle_t handle) {
+    return handle.idx();
+}
+
+template <class ColorType>
 typename mesh_traits<openmesh_t<ColorType>>::position_t mesh_traits<openmesh_t<ColorType>>::vertex_position(const mesh_t& mesh, vertex_handle_t handle) {
 	return mesh.point(handle);
 }

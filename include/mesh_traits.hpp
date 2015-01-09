@@ -42,6 +42,7 @@ struct mesh_traits {
 	static std::vector<face_handle_t> face_handles(const mesh_t& mesh);
 
 	static vertex_index_t vertex_index(const mesh_t& mesh, vertex_handle_t handle);
+	static face_index_t face_index(const mesh_t& mesh, face_handle_t handle);
 	static position_t vertex_position(const mesh_t& mesh, vertex_handle_t handle);
 	static normal_t vertex_normal(const mesh_t& mesh, vertex_handle_t handle);
 	static color_t vertex_color(const mesh_t& mesh, vertex_handle_t handle);
