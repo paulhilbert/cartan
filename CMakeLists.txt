@@ -10,7 +10,9 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-	add_definitions(-fPIC)
+    if (NOT WIN32)
+        add_definitions(-fPIC)
+    endif()
 	add_definitions(-O3)
 	add_definitions(-g)
 	add_definitions(-std=c++1y)
@@ -43,7 +45,14 @@ if (EIGEN_FOUND AND Boost_FOUND)
     target_link_libraries(cartan ${EIGEN_LIBRARIES} ${Boost_LIBRARIES} ${OPENMESH_LIBRARIES} "dl")
 
 	# install binary
-    install (TARGETS cartan DESTINATION lib)
+    if (WIN32)
+        install (FILES "${PROJECT_BINARY_DIR}/libcartan.dll.a" DESTINATION lib)
+        install (FILES "${PROJECT_BINARY_DIR}/libcartan.dll" DESTINATION lib)
+        install (FILES "${PROJECT_BINARY_DIR}/libcartan.dll" DESTINATION bin)
+    else()
+        install (TARGETS cartan DESTINATION lib)
+    endif()
 	# install header
     install (DIRECTORY include/ DESTINATION include/cartan)
+
 endif()

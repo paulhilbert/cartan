@@ -41,6 +41,9 @@ struct mesh_type_traits<openmesh_t<ColorType>> {
 	typedef Eigen::Matrix<scalar_t, 3, 1>                 eigen_vec3_t;
 	typedef Eigen::Matrix<scalar_t, 4, 1>                 eigen_vec4_t;
     typedef Eigen::Matrix<color_scalar_t, color_dim, 1>   eigen_color_t;
+    typedef std::vector<uint32_t>                         indices_t;
+    typedef std::vector<eigen_vec3_t>                     polygon_t;
+    typedef std::vector<polygon_t>                        polygons_t;
 };
 
 
@@ -61,6 +64,9 @@ struct mesh_traits<openmesh_t<ColorType>> {
 	typedef typename mesh_type_traits<openmesh_t<ColorType>>::eigen_vec3_t     eigen_vec3_t;
 	typedef typename mesh_type_traits<openmesh_t<ColorType>>::eigen_vec4_t     eigen_vec4_t;
     typedef typename mesh_type_traits<openmesh_t<ColorType>>::eigen_color_t    eigen_color_t;
+    typedef typename mesh_type_traits<openmesh_t<ColorType>>::indices_t        indices_t;
+    typedef typename mesh_type_traits<openmesh_t<ColorType>>::polygon_t        polygon_t;
+    typedef typename mesh_type_traits<openmesh_t<ColorType>>::polygons_t       polygons_t;
 
 	static bool read(mesh_t& mesh, const std::string& path);
 	static bool write(const mesh_t& mesh, const std::string& path);
@@ -97,6 +103,10 @@ struct mesh_traits<openmesh_t<ColorType>> {
 	static void transform(mesh_t& mesh, const Eigen::Affine3f& transformation);
 	static void transform(mesh_t& mesh, const Eigen::Matrix3f& transformation);
 	static void transform(mesh_t& mesh, const Eigen::Matrix4f& transformation);
+
+    static std::shared_ptr<mesh_t> mesh_from_triangles(const polygons_t& triangles);
+    static std::shared_ptr<mesh_t> mesh_from_shared_triangles(const std::vector<eigen_vec3_t>& vertices, const std::vector<indices_t>& triangles);
+    static std::shared_ptr<mesh_t> mesh_from_face_subset(const mesh_t& input_mesh, std::vector<uint32_t> subset);
 };
 
 

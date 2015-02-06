@@ -209,6 +209,62 @@ void mesh_traits<openmesh_t<ColorType>>::transform(mesh_t& mesh, const Eigen::Ma
 	}
 }
 
+template <class ColorType>
+std::shared_ptr<typename mesh_traits<openmesh_t<ColorType>>::mesh_t> mesh_traits<openmesh_t<ColorType>>::mesh_from_triangles(const polygons_t& triangles) {
+    std::shared_ptr<mesh_t> mesh(new mesh_t());
+    for (const auto& triangle : triangles) {
+        std::vector<vertex_handle_t> handles(3);
+        for (uint32_t i = 0; i < 3; ++i) {
+            handles[i] = mesh->add_vertex(position_t(triangle[i].data()));
+        }
+        mesh->add_face(handles);
+    }
+    return mesh;
+}
+
+template <class ColorType>
+std::shared_ptr<typename mesh_traits<openmesh_t<ColorType>>::mesh_t> mesh_traits<openmesh_t<ColorType>>::mesh_from_shared_triangles(const std::vector<eigen_vec3_t>& vertices, const std::vector<indices_t>& triangles) {
+    std::shared_ptr<mesh_t> mesh(new mesh_t());
+    std::vector<vertex_handle_t> handles(vertices.size());
+    for (uint32_t i = 0; i < vertices.size(); ++i) {
+        handles[i] = mesh->add_vertex(position_t(vertices[i].data()));
+    }
+    for (const auto& triangle : triangles) {
+        std::vector<vertex_handle_t> triangle_handles;
+        std::transform(triangle.begin(), triangle.end(), triangle_handles.begin(), [&] (uint32_t idx) { return handles[idx]; });
+        mesh->add_face(triangle_handles);
+    }
+
+    return mesh;
+}
+
+template <class ColorType>
+std::shared_ptr<typename mesh_traits<openmesh_t<ColorType>>::mesh_t> mesh_traits<openmesh_t<ColorType>>::mesh_from_face_subset(const mesh_t& input_mesh, std::vector<uint32_t> subset) {
+    std::shared_ptr<mesh_t> mesh(new mesh_t());
+    std::map<vertex_index_t, vertex_handle_t> vert_map;
+    for (const auto& idx : subset) {
+        auto face_iter = input_mesh.faces_begin();
+        std::advance(face_iter, idx);
+        std::vector<vertex_handle_t> tri_handles;
+        std::vector<vertex_handle_t> verts = face_vertices(input_mesh, *face_iter);
+        for (const auto& vert_handle : verts) {
+            vertex_index_t vert_index = vert_handle.idx();
+            if (vert_map.find(vert_index) == vert_map.end()) {
+                position_t pos = input_mesh.point(vert_handle);
+                normal_t nrm = input_mesh.normal(vert_handle);
+                color_t col = input_mesh.color(vert_handle);
+                vert_map[vert_index] = mesh->add_vertex(pos);
+                mesh->set_normal(vert_map[vert_index], nrm);
+                mesh->set_color(vert_map[vert_index], col);
+            }
+            tri_handles.push_back(vert_map[vert_index]);
+        }
+        mesh->add_face(tri_handles);
+    }
+
+    return mesh;
+}
+
 
 } // cartan
 
