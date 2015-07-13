@@ -57,14 +57,14 @@ struct normal_tag_ : public std::false_type {};
 template <> struct normal_tag_<pcl::PointNormal> : public std::true_type {};
 template <> struct normal_tag_<pcl::PointXYZRGBNormal> : public std::true_type {};
 template <> struct normal_tag_<pcl::PointXYZINormal> : public std::true_type {};
-template <> struct normal_tag_<pcl::PointXYZLNormal> : public std::true_type {};
+//template <> struct normal_tag_<pcl::PointXYZLNormal> : public std::true_type {};
 
 
 template <typename PointT, template <typename> class PtrT>
 inline typename pointcloud_tools<PointT, PtrT>::cloud_ptr_t
 pointcloud_tools<PointT, PtrT>::from_pcd_file(const fs::path& path, bool remove_nan) {
     if (!fs::exists(path)) {
-        throw std::runtime_error("Pointcloud file \"" + path.string() + "\" does not exist"+SPOT);
+        throw std::runtime_error("Pointcloud file \"" + path.string() + "\" does not exist");
     }
     cloud_ptr_t cloud(new cloud_t());
     pcl::io::loadPCDFile(path.string(), *cloud);
@@ -93,9 +93,9 @@ pointcloud_tools<PointT, PtrT>::from_pcd_file(const fs::path& path, const load_o
 
 template <typename PointT, template <typename> class PtrT>
 inline std::vector<typename pointcloud_tools<PointT, PtrT>::cloud_ptr_t>
-pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool remove_nan) {
+pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool do_remove_nan) {
     if (!fs::exists(path)) {
-        throw std::runtime_error("Pointcloud file \"" + path.string() + "\" does not exist"+SPOT);
+        throw std::runtime_error("Pointcloud file \"" + path.string() + "\" does not exist");
     }
 
     std::vector<cloud_ptr_t> clouds;
@@ -121,15 +121,15 @@ pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool remove_
 			cloud_ptr_t cloud(new cloud_t());
 			float scale = 1.f;
 			unsigned long size = 0;
-			float imin = scanHeader.intensityLimits.intensityMinimum;
-			float imax = scanHeader.intensityLimits.intensityMaximum;
+			//float imin = scanHeader.intensityLimits.intensityMinimum;
+			//float imax = scanHeader.intensityLimits.intensityMaximum;
 			while((size = dataReader.read()) > 0) {
 				for(unsigned long i = 0; i < size; i++) {
 					point_t p;
 					p.x = scale*xData[i];
 					p.y = scale*yData[i];
 					p.z = scale*zData[i];
-					p.intensity = (intensity[i]-imin) / (imax-imin);
+					//p.intensity = (intensity[i]-imin) / (imax-imin);
 					cloud->push_back(p);
 				}
 			}
@@ -143,11 +143,11 @@ pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool remove_
 			delete [] yData;
 			delete [] zData;
 
-            if (remove_nan) remove_nan(cloud);
+            if (do_remove_nan) remove_nan(cloud);
             clouds.push_back(cloud);
 		}
 	} catch (...) {
-        throw std::runtime_error("Error while loading pointcloud file \"" + path.string() + "\""+SPOT);
+        throw std::runtime_error("Error while loading pointcloud file \"" + path.string() + "\"");
 	}
 
     return clouds;
@@ -157,7 +157,7 @@ template <typename PointT, template <typename> class PtrT>
 template <typename SearchT>
 inline std::vector<typename pointcloud_tools<PointT, PtrT>::template load_result_t<SearchT>>
 pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, const load_options_t& options) {
-    std::vector<cloud_ptr_t> clouds = from_e57_file(paths, true);
+    std::vector<cloud_ptr_t> clouds = from_e57_file(path, true);
     std::vector<load_result_t<SearchT>> result;
 
     vec3_t centroid = vec3_t::Zero();
@@ -165,7 +165,7 @@ pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, const load_o
         centroid *= static_cast<float>(i);
         vec3_t center;
         typename SearchT::Ptr search(new SearchT());
-        clouds[i] = process_cloud_(clouds[i], options, search, &center);
+        clouds[i] = process_cloud_<SearchT>(clouds[i], options, search, &center);
         centroid += center;
         if (i > 0) centroid /= static_cast<float>(i+1);
         result.push_back({clouds[i], search});
@@ -175,7 +175,7 @@ pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, const load_o
             for (auto& p : *(cloud.first)) {
                 p.getVector3fMap() -= centroid;
             }
-            cloud->sensor_origin_ -= centroid;
+            cloud.first->sensor_origin_.head(3) -= centroid;
         }
     }
 

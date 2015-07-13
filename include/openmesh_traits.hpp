@@ -71,6 +71,8 @@ struct mesh_traits<openmesh_t<ColorType>> {
 	static bool read(mesh_t& mesh, const std::string& path);
 	static bool write(const mesh_t& mesh, const std::string& path);
 
+    static void from_polygons(mesh_t& mesh, const polygons_t& polygons, const polygons_t& vertex_normals = polygons_t(), bool triangulate = true, const std::vector<eigen_vec4_t>& colors = std::vector<eigen_vec4_t>());
+
 	static uint32_t num_vertices(const mesh_t& mesh);
 	static uint32_t num_faces(const mesh_t& mesh);
 
