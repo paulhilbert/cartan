@@ -42,6 +42,54 @@ bool mesh_traits<openmesh_t<ColorType>>::write(const mesh_t& mesh, const std::st
 }
 
 template <class ColorType>
+void mesh_traits<openmesh_t<ColorType>>::from_polygons(mesh_t& mesh, const polygons_t& polygons, const polygons_t& vertex_normals, bool triangulate, const std::vector<eigen_vec4_t>& colors) {
+    if (!polygons.size()) throw std::runtime_error("Empty polygon set given");
+    bool hasNormals = vertex_normals.size() == polygons.size();
+    
+    for (unsigned int p=0; p<polygons.size(); ++p) {
+        const polygon_t& poly = polygons[p];
+        if (poly.size() < 3) continue;
+        bool polyHasNormals = hasNormals && vertex_normals[p].size() == poly.size();
+
+        std::vector<vertex_handle_t> faceVertices;
+        for (unsigned int v=0; v < poly.size(); ++v) {
+            position_t pt(poly[v][0], poly[v][1], poly[v][2]);
+            auto handle = mesh.add_vertex(pt);
+            if (polyHasNormals) {
+                auto normal = vertex_normals[p][v].normalized();
+                mesh.set_normal(handle, normal_t(normal[0], normal[1], normal[2]));
+            }
+            faceVertices.push_back(handle);
+        }
+        mesh.add_face(faceVertices);
+    }
+    
+    if (triangulate) {
+        mesh.triangulate();
+    }
+    
+    if (colors.size() == mesh.n_vertices()) {
+        unsigned int i = 0;
+        for (auto it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
+            const auto& color = colors[i++];
+            mesh.set_color(it.handle(), color_t(color[0], color[1], color[2], color[3]));
+        }
+    } else {
+        Eigen::Vector4f color(1,1,1,1);
+        for (auto it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
+            mesh.set_color(it.handle(), color_t(color[0], color[1], color[2], color[3]));
+        }
+    }
+    
+    if (hasNormals) {
+        mesh.request_vertex_normals();
+        mesh.request_face_normals();
+        mesh.update_face_normals();
+        mesh.update_normals();
+    }
+}
+
+template <class ColorType>
 uint32_t mesh_traits<openmesh_t<ColorType>>::num_vertices(const mesh_t& mesh) {
 	return mesh.n_vertices();
 }

@@ -13,6 +13,8 @@ namespace fs = boost::filesystem;
 
 #include <pcl/point_cloud.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/common/transforms.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/filter.h>
 #include <pcl/keypoints/uniform_sampling.h>
@@ -59,7 +61,7 @@ class pointcloud_tools {
         template <typename SearchT>
         static load_result_t<SearchT> from_pcd_file(const fs::path& path, const load_options_t& options, vec3_t* centroid = nullptr);
 #ifdef USE_LIBE57
-        static std::vector<cloud_ptr_t> from_e57_file(const fs::path& path, bool remove_nan = true);
+        static std::vector<cloud_ptr_t> from_e57_file(const fs::path& path, bool do_remove_nan = true);
         template <typename SearchT>
         static std::vector<load_result_t<SearchT>> from_e57_file(const fs::path& path, const load_options_t& options);
 #endif // USE_LIBE57
