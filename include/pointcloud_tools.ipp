@@ -26,9 +26,15 @@ struct normal_dependent_algorithms_<PointT, PtrT, true> {
     }
     template <typename SearchT>
     static void estimate_normals(PtrT<pcl::PointCloud<PointT>> cloud, typename SearchT::Ptr search, radius_or_k_t neighborhood) {
+        PtrT<pcl::PointCloud<PointT>> tmpCloud(new pcl::PointCloud<PointT>(*cloud));
+        
+        for (auto& p : tmpCloud->points) {
+            p.getVector3fMap() -= cloud->sensor_origin_.head(3);
+        }
+        tmpCloud->sensor_origin_.head(3).setZero();
+        
         pcl::NormalEstimation<PointT, PointT> ne;
-        ne.setInputCloud(cloud);
-        ne.useSensorOriginAsViewPoint();
+        ne.setInputCloud(tmpCloud);
 
         ne.setSearchMethod(search);
         typename pointcloud_tools<PointT, PtrT>::template nq_search_visitor<pcl::NormalEstimation<PointT, PointT>> visitor(&ne);
@@ -93,7 +99,7 @@ pointcloud_tools<PointT, PtrT>::from_pcd_file(const fs::path& path, const load_o
 
 template <typename PointT, template <typename> class PtrT>
 inline std::vector<typename pointcloud_tools<PointT, PtrT>::cloud_ptr_t>
-pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool do_remove_nan) {
+pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool do_remove_nan, process_func_t process_func) {
     if (!fs::exists(path)) {
         throw std::runtime_error("Pointcloud file \"" + path.string() + "\" does not exist");
     }
@@ -142,8 +148,14 @@ pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, bool do_remo
 			delete [] xData;
 			delete [] yData;
 			delete [] zData;
+            delete [] intensity;
 
             if (do_remove_nan) remove_nan(cloud);
+            
+            if (process_func) {
+                process_func(scanIndex, cloud);
+            }
+            
             clouds.push_back(cloud);
 		}
 	} catch (...) {
@@ -157,19 +169,24 @@ template <typename PointT, template <typename> class PtrT>
 template <typename SearchT>
 inline std::vector<typename pointcloud_tools<PointT, PtrT>::template load_result_t<SearchT>>
 pointcloud_tools<PointT, PtrT>::from_e57_file(const fs::path& path, const load_options_t& options) {
-    std::vector<cloud_ptr_t> clouds = from_e57_file(path, true);
-    std::vector<load_result_t<SearchT>> result;
-
     vec3_t centroid = vec3_t::Zero();
-    for (uint32_t i = 0; i < clouds.size(); ++i) {
-        centroid *= static_cast<float>(i);
+    std::vector<load_result_t<SearchT>> result;
+    
+    process_func_t process_func = [&] (int scan_index, cloud_ptr_t& cloud) {
+        centroid *= static_cast<float>(scan_index);
         vec3_t center;
         typename SearchT::Ptr search(new SearchT());
-        clouds[i] = process_cloud_<SearchT>(clouds[i], options, search, &center);
+        cloud = process_cloud_<SearchT>(cloud, options, search, &center);
         centroid += center;
-        if (i > 0) centroid /= static_cast<float>(i+1);
-        result.push_back({clouds[i], search});
-    }
+        if (scan_index > 0) centroid /= static_cast<float>(scan_index+1);
+        if (!options.keep_search_tree) {
+            search.reset();
+        }
+        result.push_back({cloud, search});
+    };
+    
+    from_e57_file(path, true, process_func);
+    
     if (options.demean) {
         for (auto cloud : result) {
             for (auto& p : *(cloud.first)) {
