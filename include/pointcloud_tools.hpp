@@ -1,6 +1,7 @@
 #ifndef _CARTAN_POINTCLOUD_TOOLS_HPP_
 #define _CARTAN_POINTCLOUD_TOOLS_HPP_
 
+#include <functional>
 #include <memory>
 #include <vector>
 #include <type_traits>
@@ -43,6 +44,7 @@ class pointcloud_tools {
         typedef std::vector<int>                       indices_t;
         template <typename MethodT>
         class nq_search_visitor;
+        typedef std::function<void (int, cloud_ptr_t&)> process_func_t;
 
         typedef struct load_options__ {
             bool           subsample;
@@ -52,6 +54,7 @@ class pointcloud_tools {
             bool           estimate_normals;
             bool           estimate_normals_before_subsampling;
             radius_or_k_t  neighborhood;
+            bool           keep_search_tree = true;
         } load_options_t;
 
     public:
@@ -61,7 +64,7 @@ class pointcloud_tools {
         template <typename SearchT>
         static load_result_t<SearchT> from_pcd_file(const fs::path& path, const load_options_t& options, vec3_t* centroid = nullptr);
 #ifdef USE_LIBE57
-        static std::vector<cloud_ptr_t> from_e57_file(const fs::path& path, bool do_remove_nan = true);
+        static std::vector<cloud_ptr_t> from_e57_file(const fs::path& path, bool do_remove_nan = true, process_func_t process_func = process_func_t());
         template <typename SearchT>
         static std::vector<load_result_t<SearchT>> from_e57_file(const fs::path& path, const load_options_t& options);
 #endif // USE_LIBE57
