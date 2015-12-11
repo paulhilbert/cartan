@@ -55,5 +55,16 @@ if (EIGEN_FOUND AND Boost_FOUND)
     endif()
 	# install header
     install (DIRECTORY include/ DESTINATION include/cartan)
+    # install cmake config file
+    file (GLOB find_modules RELATIVE "${PROJECT_SOURCE_DIR}" "cmake/modules/self/*.cmake")
+    install (FILES ${find_modules} DESTINATION share/Cartan)
+
+    # install find module
+    file (GLOB find_modules RELATIVE "${PROJECT_SOURCE_DIR}" "cmake/modules/self/*.cmake")
+    install (FILES ${find_modules} DESTINATION share/Cartan)
+
+
+
+
 
 endif()
