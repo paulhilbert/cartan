@@ -23,7 +23,7 @@ class mesh_algorithms {
         static std::vector<float> face_areas(const Mesh& mesh);
         static float surface_area(const Mesh& mesh);
 
-        static std::vector<std::pair<eigen_vec3_t, eigen_vec3_t>> sample_surface_points(const Mesh& mesh, uint32_t samples_per_square_unit, float normal_error = 0.f, bool deterministic = false);
+        static std::vector<std::pair<eigen_vec3_t, eigen_vec3_t>> sample_surface_points(const Mesh& mesh, float samples_per_square_unit, float normal_error = 0.f, bool deterministic = false);
 
     protected:
         template <class RNG>

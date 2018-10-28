@@ -15,11 +15,11 @@ inline typename mesh_algorithms<Mesh>::eigen_vec3_t mesh_algorithms<Mesh>::centr
 
 template <class Mesh>
 inline void mesh_algorithms<Mesh>::center(Mesh& mesh) {
-    eigen_vec3_t centroid = centroid(mesh);
+    eigen_vec3_t c = mesh_algorithms<Mesh>::centroid(mesh);
 
     for (const auto& v : mesh_traits<Mesh>::vertex_handles(mesh)) {
         eigen_vec3_t p = mesh_traits<Mesh>::eigen_vertex_position(mesh, v);
-        mesh_traits<Mesh>::set_eigen_vertex_position(mesh, v, p - centroid);
+        mesh_traits<Mesh>::set_eigen_vertex_position(mesh, v, p - c);
     }
 }
 
@@ -46,7 +46,7 @@ inline float mesh_algorithms<Mesh>::surface_area(const Mesh& mesh) {
 }
 
 template <class Mesh>
-inline std::vector<std::pair<typename mesh_algorithms<Mesh>::eigen_vec3_t, typename mesh_algorithms<Mesh>::eigen_vec3_t>> mesh_algorithms<Mesh>::sample_surface_points(const Mesh& mesh, uint32_t samples_per_square_unit, float normal_error, bool deterministic) {
+inline std::vector<std::pair<typename mesh_algorithms<Mesh>::eigen_vec3_t, typename mesh_algorithms<Mesh>::eigen_vec3_t>> mesh_algorithms<Mesh>::sample_surface_points(const Mesh& mesh, float samples_per_square_unit, float normal_error, bool deterministic) {
     std::vector<float> hist = face_areas(mesh);
 	std::partial_sum(hist.begin(), hist.end(), hist.begin());
 	float surface_area = hist.back();

@@ -119,6 +119,15 @@ std::vector<typename mesh_traits<openmesh_t<ColorType>>::face_handle_t> mesh_tra
 }
 
 template <class ColorType>
+std::vector<typename mesh_traits<openmesh_t<ColorType>>::edge_handle_t> mesh_traits<openmesh_t<ColorType>>::edge_handles(const mesh_t& mesh) {
+	std::vector<edge_handle_t> edges;
+	for (auto it = mesh.edges_begin(); it != mesh.edges_end(); ++it) {
+        edges.push_back(*it);
+    }
+	return edges;
+}
+
+template <class ColorType>
 std::vector<typename mesh_traits<openmesh_t<ColorType>>::vertex_index_t> mesh_traits<openmesh_t<ColorType>>::vertex_indices(const mesh_t& mesh) {
 	std::vector<vertex_index_t> vertices(mesh.n_vertices());
 	unsigned int i=0;
@@ -184,9 +193,30 @@ typename mesh_traits<openmesh_t<ColorType>>::eigen_color_t mesh_traits<openmesh_
 }
 
 template <class ColorType>
+void mesh_traits<openmesh_t<ColorType>>::set_eigen_vertex_position(mesh_t& mesh, vertex_handle_t handle, const eigen_vec3_t& pos) {
+    typedef typename openmesh_t<ColorType>::Point pos_t;
+    mesh.set_point(handle, pos_t(pos.data()));
+}
+
+template <class ColorType>
 void mesh_traits<openmesh_t<ColorType>>::set_eigen_vertex_color(mesh_t& mesh, vertex_handle_t handle, const eigen_color_t& color) {
     color_t om_color(color.data());
     set_vertex_color(mesh, handle, om_color);
+}
+
+template <class ColorType>
+std::pair<typename mesh_traits<openmesh_t<ColorType>>::face_handle_t, typename mesh_traits<openmesh_t<ColorType>>::face_handle_t>
+mesh_traits<openmesh_t<ColorType>>::edge_faces(const mesh_t& mesh, edge_handle_t edge) {
+    auto he0 = mesh.halfedge_handle(edge, 0);
+    auto he1 = mesh.halfedge_handle(edge, 1);
+    return std::make_pair(mesh.face_handle(he0), mesh.face_handle(he1));
+}
+
+template <class ColorType>
+std::pair<typename mesh_traits<openmesh_t<ColorType>>::vertex_handle_t, typename mesh_traits<openmesh_t<ColorType>>::vertex_handle_t>
+mesh_traits<openmesh_t<ColorType>>::edge_vertices(const mesh_t& mesh, edge_handle_t edge) {
+    auto he0 = mesh.halfedge_handle(edge, 0);
+    return std::make_pair(mesh.from_vertex_handle(he0), mesh.to_vertex_handle(he0));
 }
 
 template <class ColorType>
